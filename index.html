@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Point Master — Business class on the points you already have</title>
+<meta name="description" content="I watch your routes around the clock and book premium award seats on your points the moment they open. Reach me directly on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Figtree:wght@400;500;600&family=Martian+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #0a1020;
+    --night-2: #111a2e;
+    --panel: #151f36;
+    --line: #24314f;
+    --ink: #e9edf5;
+    --muted: #96a2bc;
+    --amber: #ffb84d;
+    --amber-dim: #8a6630;
+    --open: #5be3a0;
+    --flap: #0d1424;
+    --radius: 6px;
+    --max: 1160px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--night);
+    color: var(--ink);
+    font-family: "Figtree", sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  /* faint runway grid + grain for atmosphere */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 70% -10%, rgba(255,184,77,.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 0% 100%, rgba(91,227,160,.05), transparent 60%),
+      linear-gradient(var(--night), var(--night));
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .06;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  main, header, footer { position: relative; z-index: 1; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+  a { color: inherit; }
+
+  h1, h2, h3 { font-family: "Big Shoulders Display", sans-serif; font-weight: 800; line-height: .95; letter-spacing: .005em; text-transform: uppercase; }
+  h1 { font-size: clamp(2.8rem, 6.4vw, 5.6rem); }
+  h2 { font-size: clamp(2.4rem, 5vw, 4rem); }
+  h3 { font-size: 1.7rem; font-weight: 700; }
+  .lede { font-size: 1.2rem; color: var(--muted); max-width: 34em; }
+  .amber { color: var(--amber); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: .6em;
+    font: 600 1rem "Figtree", sans-serif; text-decoration: none; cursor: pointer;
+    padding: .95em 1.5em; border-radius: var(--radius); border: 1px solid transparent;
+    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-primary { background: var(--amber); color: #1b1305; }
+  .btn-primary:hover { background: #ffc871; }
+  .btn-ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+  .btn-ghost:hover { border-color: var(--amber); }
+  .btn svg { width: 1.15em; height: 1.15em; }
+
+  /* ---------- Nav ---------- */
+  header { border-bottom: 1px solid var(--line); background: rgba(10,16,32,.8); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 20; }
+  nav { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .logo { display: flex; align-items: center; gap: .55em; font-family: "Big Shoulders Display"; font-weight: 800; font-size: 1.6rem; text-transform: uppercase; text-decoration: none; letter-spacing: .02em; }
+  .logo-mark { width: 30px; height: 30px; }
+  .nav-links { display: flex; gap: 2rem; align-items: center; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: .95rem; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links .btn { padding: .6em 1.1em; color: #1b1305; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 88px 0 96px; }
+  .hero-grid > *, .contact-grid > *, .section-head > * { min-width: 0; }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; }
+  .hero h1 { margin-bottom: 28px; }
+  .hero .lede { margin-bottom: 36px; }
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+  .hero-note { margin-top: 22px; font-size: .92rem; color: var(--muted); }
+
+  /* Split-flap departures board */
+  .board {
+    background: linear-gradient(180deg, #0c1322, #090f1c);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 22px 22px 18px;
+    box-shadow: 0 40px 80px -30px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.04);
+    transform: rotate(-1.2deg);
+  }
+  .board-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .board-title { font-family: "Big Shoulders Display"; font-weight: 700; font-size: 1.35rem; text-transform: uppercase; color: var(--amber); letter-spacing: .06em; }
+  .live { display: flex; align-items: center; gap: .5em; font-size: .78rem; color: var(--muted); }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--open); box-shadow: 0 0 0 0 rgba(91,227,160,.6); animation: ping 1.8s infinite; }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(91,227,160,.55);} 80%,100% { box-shadow: 0 0 0 10px rgba(91,227,160,0);} }
+  .board-cols, .board-row { display: grid; grid-template-columns: max-content max-content max-content max-content; column-gap: 14px; justify-content: space-between; }
+  .board-cols span { min-width: 0; }
+  .board-cols { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; padding: 0 2px 8px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .board-row { padding: 6px 0; }
+  .cell { display: flex; gap: 2px; }
+  .flap {
+    font-family: "Martian Mono", monospace; font-weight: 600; font-size: .78rem;
+    width: 1.25em; height: 1.75em; display: grid; place-items: center;
+    background: var(--flap); color: var(--amber); border-radius: 2px;
+    position: relative; overflow: hidden;
+  }
+  .flap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,.65); }
+  .flap.flip { animation: flip .09s linear; }
+  @keyframes flip { 0% { transform: scaleY(1);} 50% { transform: scaleY(.15);} 100% { transform: scaleY(1);} }
+  .status-open .flap { color: var(--open); }
+  .status-watch .flap { color: var(--amber-dim); }
+  .board-foot { margin-top: 14px; font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+
+  /* ---------- Sections ---------- */
+  section { padding: 104px 0; }
+  .section-head { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: end; margin-bottom: 56px; }
+  .divider { border-top: 1px solid var(--line); }
+
+  /* How it works — a flight path */
+  .path { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .path::before {
+    content: ""; position: absolute; top: 27px; left: 28px; right: 28px; height: 2px;
+    background: repeating-linear-gradient(90deg, var(--amber) 0 10px, transparent 10px 20px); opacity: .5;
+  }
+  .stop { position: relative; }
+  .stop-dot { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--night-2); border: 2px solid var(--amber); margin-bottom: 24px; position: relative; z-index: 1; }
+  .stop-dot svg { width: 24px; height: 24px; stroke: var(--amber); }
+  .stop h3 { margin-bottom: 10px; }
+  .stop p { color: var(--muted); }
+  .bubble { margin-top: 18px; background: #12301f; border: 1px solid #1f5136; color: #d5f5e4; padding: 12px 14px; border-radius: 10px 10px 10px 2px; font-size: .92rem; max-width: 30em; }
+
+  /* Why — asymmetric */
+  .why-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 36px; }
+  .card.big { grid-row: span 2; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(160deg, #1b2440 0%, var(--panel) 60%); }
+  .card h3 { margin-bottom: 12px; }
+  .card p { color: var(--muted); }
+  .clock { font-family: "Big Shoulders Display"; font-weight: 800; font-size: clamp(5rem, 11vw, 9rem); line-height: 1; color: var(--amber); margin-bottom: 12px; }
+  .compare { margin-top: 28px; display: grid; gap: 10px; font-size: .95rem; }
+  .compare div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+  .compare span:first-child { color: var(--muted); }
+
+  /* Pricing */
+  .pricing { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .price-card { border: 1px solid var(--line); border-radius: 10px; padding: 36px; background: var(--night-2); }
+  .price-card.featured { border-color: var(--amber); position: relative; }
+  .price-card .tag { position: absolute; top: -12px; left: 32px; background: var(--amber); color: #1b1305; font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 4px; }
+  .price { font-family: "Big Shoulders Display"; font-weight: 800; font-size: 2.8rem; margin: 10px 0 4px; }
+  .price-card ul { list-style: none; margin: 22px 0 28px; display: grid; gap: 10px; }
+  .price-card li { padding-left: 26px; position: relative; color: var(--muted); }
+  .price-card li::before { content: ""; position: absolute; left: 0; top: .55em; width: 12px; height: 6px; border-left: 2px solid var(--amber); border-bottom: 2px solid var(--amber); transform: rotate(-45deg); }
+  .fine { margin-top: 20px; color: var(--muted); font-size: .92rem; }
+
+  /* FAQ */
+  .faq { max-width: 820px; }
+  details { border-bottom: 1px solid var(--line); }
+  summary { cursor: pointer; list-style: none; padding: 24px 40px 24px 0; font-weight: 600; font-size: 1.12rem; position: relative; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 1.6rem; color: var(--amber); transition: transform .2s; }
+  details[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+  details p { color: var(--muted); padding: 0 0 24px; max-width: 42em; }
+
+  /* Contact */
+  .contact-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 56px; }
+  .wa-card { background: #12301f; border: 1px solid #1f5136; border-radius: 10px; padding: 32px; margin-top: 32px; }
+  .wa-card p { color: #c4e9d5; margin-bottom: 20px; }
+  .btn-wa { background: var(--open); color: #06200f; }
+  .btn-wa:hover { background: #7aeeb6; }
+  form { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 36px; display: grid; gap: 18px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  label { display: grid; gap: 6px; font-size: .88rem; font-weight: 500; color: var(--muted); }
+  input, select, textarea {
+    font: inherit; font-size: 1rem; color: var(--ink); background: var(--night); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: .75em .9em; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255,184,77,.15); }
+  textarea { min-height: 96px; resize: vertical; }
+  .form-note { font-size: .82rem; color: var(--muted); }
+  .form-ok { display: none; color: var(--open); font-weight: 600; }
+
+  footer { border-top: 1px solid var(--line); padding: 36px 0; color: var(--muted); font-size: .9rem; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  /* Load + scroll reveals */
+  .rise { opacity: 0; transform: translateY(18px); animation: rise .8s cubic-bezier(.2,.7,.2,1) forwards; }
+  .d1 { animation-delay: .05s; } .d2 { animation-delay: .18s; } .d3 { animation-delay: .32s; } .d4 { animation-delay: .5s; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .rise, .reveal { animation: none; opacity: 1; transform: none; transition: none; }
+    .flap.flip { animation: none; }
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 920px) {
+    .hero-grid, .section-head, .why-grid, .pricing, .contact-grid { grid-template-columns: 1fr; }
+    .card.big { grid-row: auto; }
+    .path { grid-template-columns: 1fr; gap: 40px; }
+    .path::before { top: 28px; bottom: 28px; left: 27px; right: auto; width: 2px; height: auto; background: repeating-linear-gradient(180deg, var(--amber) 0 10px, transparent 10px 20px); }
+    .stop { padding-left: 80px; }
+    .stop-dot { position: absolute; left: 0; top: 0; }
+    .board { transform: none; }
+    .nav-links a:not(.btn) { display: none; }
+    section { padding: 80px 0; }
+    .hero { padding: 56px 0 72px; }
+  }
+  @media (max-width: 560px) {
+    h1 { font-size: 2.6rem; }
+    .board-cols span { width: auto !important; }
+    .board-cols { display: none; }
+    .wrap { padding: 0 16px; }
+    .board { padding: 14px 12px; }
+    .board-cols, .board-row { grid-template-columns: max-content max-content max-content; column-gap: 10px; }
+    .board-cols span:nth-child(3), .board-row .cell:nth-child(3) { display: none; }
+    .flap { font-size: .62rem; width: 1.15em; }
+    .row2 { grid-template-columns: 1fr; }
+    .card, .price-card, form { padding: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <a href="#" class="logo" aria-label="Point Master home">
+      <svg class="logo-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" stroke="#ffb84d" stroke-width="2"/>
+        <path d="M16 6v10l6 4" stroke="#ffb84d" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="2" fill="#ffb84d"/>
+      </svg>
+      Point Master
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact" class="btn btn-primary">Send me a trip</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1 class="rise d1">Business class seats open without warning. <span class="amber">I'm watching when they do.</span></h1>
+        <p class="lede rise d2">You've already earned the points. I watch your routes around the clock, grab the seat the moment it opens, and book it on your points. You just say yes.</p>
+        <div class="hero-ctas rise d3">
+          <a href="#contact" class="btn btn-primary">Send me a trip</a>
+          <a href="https://wa.me/00000000000" class="btn btn-ghost" data-wa>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
+            Message me on WhatsApp
+          </a>
+        </div>
+        <p class="hero-note rise d4">For founders and executives sitting on Amex, Chase, Citi, Capital One or airline points.</p>
+      </div>
+
+      <div class="board rise d3" aria-label="Example watchlist of routes being monitored">
+        <div class="board-head">
+          <span class="board-title">Watchlist</span>
+          <span class="live"><i></i>Checking now</span>
+        </div>
+        <div class="board-cols"><span style="width:calc(7*1.25em*.78/.7 + 12px)">Route</span><span style="width:calc(5*1.25em*.78/.7 + 8px)">Cabin</span><span style="width:calc(7*1.25em*.78/.7 + 12px)">Points</span><span style="width:calc(8*1.25em*.78/.7 + 14px)">Status</span></div>
+        <div id="rows"></div>
+        <p class="board-foot">Example watchlist. Your routes, your dates, checked continuously.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how" class="divider">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Three messages.<br>One lie-flat seat.</h2>
+        <p class="lede">No forms to fill in for every trip, no ticket queue. You tell me where you're going, and I take it from there.</p>
+      </div>
+      <div class="path">
+        <div class="stop reveal">
+          <div class="stop-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>Send me the trip</h3>
+          <p>Where, roughly when, who's flying, and which points you have. A text is fine.</p>
+          <div class="bubble">"Tokyo, late March, two of us. About 400k Amex points."</div>
+        </div>
+        <div class="stop reveal">
+          <div class="stop-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>I watch the routes</h3>
+          <p>Award seats open and vanish within hours. I track every route that works for you, day and night, across the programs your points can reach.</p>
+          <div class="bubble">"Nothing yet for those dates. I'm watching it and will message you the moment it opens."</div>
+        </div>
+        <div class="stop reveal">
+          <div class="stop-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h3>You say yes. I book it.</h3>
+          <p>You get the options with the points, the fees and the cash price side by side. Nothing gets transferred or booked until you approve it.</p>
+          <div class="bubble">"Business class just opened for the 22nd. Want me to grab it?"</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section class="divider">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Why it works when searching yourself doesn't</h2>
+        <p class="lede">You've probably looked before and found nothing. That's normal. The seats exist. They just don't wait for you to check.</p>
+      </div>
+      <div class="why-grid">
+        <div class="card big reveal">
+          <div>
+            <div class="clock">24/7</div>
+            <h3>Always watching</h3>
+            <p>Most booking services run one search and send you what they found that day. I keep watching your routes until the right seat opens, then act within minutes.</p>
+          </div>
+          <div class="compare">
+            <div><span>One-off concierge</span><span>One search, then you wait</span></div>
+            <div><span>Card concierge</span><span>Books cash fares</span></div>
+            <div><span>Point Master</span><span class="amber">Watches until it opens</span></div>
+          </div>
+        </div>
+        <div class="card reveal">
+          <h3>A real person on WhatsApp</h3>
+          <p>No ticket numbers, no email queue. Message me and you get an answer from the person actually doing the booking.</p>
+        </div>
+        <div class="card reveal">
+          <h3>Honest numbers</h3>
+          <p>Every option shows points, fees and the cash price it replaces. If cash is the better deal, I'll tell you and you keep your points.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing" class="divider">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Simple pricing</h2>
+        <p class="lede">Pay per trip, or keep me on watch all year. Either way you'll see the cash value of the seat before you pay anything.</p>
+      </div>
+      <div class="pricing">
+        <div class="price-card reveal">
+          <h3>Per trip</h3>
+          <div class="price">[$ — per ticket]</div>
+          <p class="form-note">For the occasional big trip.</p>
+          <ul>
+            <li>Route monitoring until your seat opens</li>
+            <li>Points vs. cash comparison on every option</li>
+            <li>Booking and confirmation handled</li>
+            <li>WhatsApp access for the trip</li>
+          </ul>
+          <a href="#contact" class="btn btn-ghost">Send me a trip</a>
+        </div>
+        <div class="price-card featured reveal">
+          <span class="tag">For frequent flyers</span>
+          <h3>Always-on</h3>
+          <div class="price">[$ — per month]</div>
+          <p class="form-note">For people who fly premium several times a year.</p>
+          <ul>
+            <li>Standing watch on all your regular routes</li>
+            <li>Priority booking when seats open</li>
+            <li>Changes and rebooking handled</li>
+            <li>WhatsApp access, any time</li>
+          </ul>
+          <a href="#contact" class="btn btn-primary">Talk to me about it</a>
+        </div>
+      </div>
+      <p class="fine reveal">You pay the airline's taxes and fees directly. My fee is separate and agreed before I start.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="divider">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Questions people ask first</h2>
+      </div>
+      <div class="faq reveal">
+        <details>
+          <summary>Do I need to give you my logins?</summary>
+          <p>Not to get started. I can find and hold the seat, and you complete the transfer and booking yourself with step-by-step instructions. If you'd rather I handle it, logins are shared through a password manager, never by text or email, and covered by a written agreement. I never ask for card or passport numbers in a message.</p>
+        </details>
+        <details>
+          <summary>Whose points do you use?</summary>
+          <p>Yours, only. I don't buy, sell or broker points. Everything is booked on your own card and airline accounts, in your name.</p>
+        </details>
+        <details>
+          <summary>Will you transfer my points without asking?</summary>
+          <p>Never. Transfers between programs can't be reversed, so nothing moves until you've seen the exact seat, the points, the fees and said yes.</p>
+        </details>
+        <details>
+          <summary>Which points work?</summary>
+          <p>Amex Membership Rewards, Chase Ultimate Rewards, Citi ThankYou, Capital One, Bilt, and most major airline and hotel programs. Send me your balances and I'll tell you what they can reach.</p>
+        </details>
+        <details>
+          <summary>What if my plans change?</summary>
+          <p>I'll explain the change and cancellation rules for each option before you book. If something moves, I handle the rebooking.</p>
+        </details>
+        <details>
+          <summary>Can't my card's concierge do this?</summary>
+          <p>Card concierges are good at booking cash fares. Finding and catching partner award space on points is a different job, and it's the only one I do.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="divider">
+    <div class="wrap contact-grid">
+      <div class="reveal">
+        <h2>Where are you headed?</h2>
+        <p class="lede" style="margin-top:20px">Send me the trip and roughly what points you have. I'll come back with what's realistic, usually the same day.</p>
+        <div class="wa-card">
+          <p>Prefer to just text? Message me on WhatsApp. It's the fastest way to reach me.</p>
+          <a href="https://wa.me/00000000000" class="btn btn-wa" data-wa>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
+            Message me on WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <form class="reveal" name="trip-request" method="POST" data-netlify="true" netlify-honeypot="company-website" id="trip-form">
+        <input type="hidden" name="form-name" value="trip-request">
+        <p hidden><label>Leave blank <input name="company-website"></label></p>
+        <div class="row2">
+          <label>Name <input name="name" required autocomplete="name"></label>
+          <label>Email <input name="email" type="email" required autocomplete="email"></label>
+        </div>
+        <div class="row2">
+          <label>WhatsApp / phone <input name="phone" type="tel" autocomplete="tel"></label>
+          <label>Travellers <input name="travellers" type="number" min="1" value="1"></label>
+        </div>
+        <div class="row2">
+          <label>From <input name="from" placeholder="e.g. New York"></label>
+          <label>To <input name="to" placeholder="e.g. Tokyo"></label>
+        </div>
+        <div class="row2">
+          <label>When <input name="dates" placeholder="e.g. late March, flexible"></label>
+          <label>Cabin
+            <select name="cabin">
+              <option>Business</option>
+              <option>First</option>
+              <option>Premium economy</option>
+            </select>
+          </label>
+        </div>
+        <label>Which points do you have? <textarea name="points" placeholder="e.g. ~400k Amex, 150k United. Balances only, no logins."></textarea></label>
+        <button class="btn btn-primary" type="submit">Send me the trip</button>
+        <p class="form-note">Balances only. Please don't send passwords or card numbers here.</p>
+        <p class="form-ok" id="form-ok">Got it. I'll be in touch shortly.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; <span id="yr"></span> Point Master</span>
+    <span>Award flights booked on your own points.</span>
+  </div>
+</footer>
+
+<script>
+  // ---- Split-flap watchlist ----
+  const CH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-> ";
+  const rows = [
+    ["JFK>NRT", "BIZ", "75,000", "WATCHING", "OPENED"],
+    ["SFO>LHR", "BIZ", "57,500", "OPENED", "BOOKED"],
+    ["MIA>CDG", "FIRST", "90,000", "WATCHING", "WATCHING"],
+    ["LAX>SYD", "BIZ", "80,000", "WATCHING", "OPENED"],
+    ["ORD>DXB", "FIRST", "108,000", "OPENED", "BOOKED"]
+  ];
+  const widths = [7, 5, 7, 8];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const host = document.getElementById("rows");
+
+  function cell(text, w) {
+    const c = document.createElement("div"); c.className = "cell";
+    for (let i = 0; i < w; i++) { const f = document.createElement("span"); f.className = "flap"; f.textContent = " "; c.appendChild(f); }
+    return c;
+  }
+  function setStatusClass(c, t) { c.classList.toggle("status-open", t === "OPENED" || t === "BOOKED"); c.classList.toggle("status-watch", t === "WATCHING"); }
+  function flipTo(c, text, w) {
+    const target = text.padEnd(w, " ");
+    [...c.children].forEach((f, i) => {
+      if (reduce) { f.textContent = target[i]; return; }
+      let n = 4 + Math.floor(Math.random() * 6) + i;
+      const tick = () => {
+        f.classList.remove("flip"); void f.offsetWidth; f.classList.add("flip");
+        if (--n <= 0) { f.textContent = target[i]; return; }
+        f.textContent = CH[Math.floor(Math.random() * CH.length)];
+        setTimeout(tick, 55);
+      };
+      setTimeout(tick, 120 + i * 30);
+    });
+  }
+  const statusCells = rows.map((r, ri) => {
+    const row = document.createElement("div"); row.className = "board-row";
+    const cells = widths.map(w => cell("", w));
+    cells.forEach(c => row.appendChild(c)); host.appendChild(row);
+    setTimeout(() => {
+      r.slice(0, 4).forEach((t, i) => flipTo(cells[i], t, widths[i]));
+      setStatusClass(cells[3], r[3]);
+    }, 400 + ri * 220);
+    return { c: cells[3], states: [r[3], r[4]], idx: 0 };
+  });
+  // Every few seconds one row changes status, like a live board.
+  if (!reduce) setInterval(() => {
+    const s = statusCells[Math.floor(Math.random() * statusCells.length)];
+    s.idx = 1 - s.idx; const t = s.states[s.idx];
+    flipTo(s.c, t, 8); setTimeout(() => setStatusClass(s.c, t), 500);
+  }, 3200);
+
+  // ---- Scroll reveal ----
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .15 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+  // ---- Form: posts to Netlify Forms when hosted there; shows confirmation either way ----
+  document.getElementById("trip-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const f = e.target;
+    fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(new FormData(f)).toString() })
+      .catch(() => {})
+      .finally(() => { f.querySelector("button").disabled = true; document.getElementById("form-ok").style.display = "block"; });
+  });
+
+  document.getElementById("yr").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
