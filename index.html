@@ -428,9 +428,7 @@
         </div>
       </div>
 
-      <form class="reveal" name="trip-request" method="POST" data-netlify="true" netlify-honeypot="company-website" id="trip-form">
-        <input type="hidden" name="form-name" value="trip-request">
-        <p hidden><label>Leave blank <input name="company-website"></label></p>
+      <form class="reveal" id="trip-form">
         <div class="row2">
           <label>Name <input name="name" required autocomplete="name"></label>
           <label>Email <input name="email" type="email" required autocomplete="email"></label>
@@ -454,9 +452,9 @@
           </label>
         </div>
         <label>Which points do you have? <textarea name="points" placeholder="e.g. ~400k Amex, 150k United. Balances only, no logins."></textarea></label>
-        <button class="btn btn-primary" type="submit">Send me the trip</button>
+        <button class="btn btn-primary" type="submit">Send me the trip on WhatsApp</button>
         <p class="form-note">Balances only. Please don't send passwords or card numbers here.</p>
-        <p class="form-ok" id="form-ok">Got it. I'll be in touch shortly.</p>
+        <p class="form-ok" id="form-ok">WhatsApp should have opened with your trip filled in. Just hit send.</p>
       </form>
     </div>
   </section>
@@ -524,13 +522,24 @@
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: .15 });
   document.querySelectorAll(".reveal").forEach(el => io.observe(el));
 
-  // ---- Form: posts to Netlify Forms when hosted there; shows confirmation either way ----
+  // ---- WhatsApp: set your number once here (country code, digits only) ----
+  const WA_NUMBER = "00000000000";
+  document.querySelectorAll("[data-wa]").forEach(a => a.href = `https://wa.me/${WA_NUMBER}`);
+
+  // ---- Form: opens WhatsApp with the trip details pre-filled (no server needed) ----
   document.getElementById("trip-form").addEventListener("submit", e => {
     e.preventDefault();
-    const f = e.target;
-    fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(new FormData(f)).toString() })
-      .catch(() => {})
-      .finally(() => { f.querySelector("button").disabled = true; document.getElementById("form-ok").style.display = "block"; });
+    const d = Object.fromEntries(new FormData(e.target));
+    const msg = [
+      `Hi, I'm ${d.name}. I'd like help with a trip.`,
+      `Route: ${d.from || "?"} to ${d.to || "?"}`,
+      `When: ${d.dates || "flexible"}`,
+      `Travellers: ${d.travellers} | Cabin: ${d.cabin}`,
+      `Points: ${d.points || "-"}`,
+      `Email: ${d.email}${d.phone ? " | Phone: " + d.phone : ""}`
+    ].join("\n");
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+    document.getElementById("form-ok").style.display = "block";
   });
 
   document.getElementById("yr").textContent = new Date().getFullYear();
